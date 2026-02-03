@@ -1,14 +1,52 @@
-import { StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
+import { NoteCard } from '@/components/NoteCard';
 import { Text, View } from '@/components/Themed';
+import type { Note } from '@/services/notesDb';
+import { getAllNotes } from '@/services/notesDb';
 
-export default function TabOneScreen() {
+export default function NotesScreen() {
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadNotes = useCallback(async () => {
+    const data = await getAllNotes();
+    setNotes(data);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadNotes();
+    }, [loadNotes])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadNotes();
+    setRefreshing(false);
+  }, [loadNotes]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <FlatList
+        data={notes}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <NoteCard note={item} />}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No notes yet</Text>
+            <Text style={styles.emptySubtext}>
+              Tap + to create your first sermon note
+            </Text>
+          </View>
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
     </View>
   );
 }
@@ -16,16 +54,24 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  list: {
+    paddingVertical: 8,
+    paddingBottom: 32,
+  },
+  empty: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 64,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  emptySubtext: {
+    fontSize: 14,
+    opacity: 0.7,
   },
 });

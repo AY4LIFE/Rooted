@@ -4,13 +4,18 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { View } from 'react-native';
+import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { useColorScheme } from '@/components/useColorScheme';
+import { TranslationProvider } from '@/contexts/TranslationContext';
 
 export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+    // Catch any errors thrown by the Layout component.
+    ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
@@ -49,11 +54,25 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <TranslationProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <View style={{ flex: 1 }}>
+            <OfflineBanner />
+            <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="note/[id]"
+            options={{
+              title: 'Note',
+              headerBackTitle: 'Back',
+            }}
+            />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+          </View>
+        </ThemeProvider>
+      </TranslationProvider>
+    </GestureHandlerRootView>
   );
 }
