@@ -10,13 +10,16 @@ import {
     View,
 } from 'react-native';
 
-import { Text } from '@/components/Themed';
+import { Text, useThemeColor } from '@/components/Themed';
 
 export default function SettingsScreen() {
   const { translationId, translationName, setTranslation } = useTranslation();
   const [translations, setTranslations] = useState<BibleTranslation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const errorColor = useThemeColor({}, 'error');
+  const listRowBg = useThemeColor({}, 'listRow');
+  const listRowSelectedBg = useThemeColor({}, 'listRowSelected');
 
   const loadTranslations = useCallback(async () => {
     setLoading(true);
@@ -64,7 +67,7 @@ export default function SettingsScreen() {
         </Pressable>
       );
     },
-    [translationId, onSelect]
+    [translationId, onSelect, listRowBg, listRowSelectedBg]
   );
 
   return (
@@ -134,7 +137,6 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
-    color: '#dc2626',
     marginBottom: 8,
   },
   listWrap: {
@@ -157,10 +159,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 6,
-    backgroundColor: 'rgba(128,128,128,0.1)',
-  },
-  rowSelected: {
-    backgroundColor: 'rgba(59, 130, 246, 0.25)',
   },
   rowPressed: {
     opacity: 0.8,

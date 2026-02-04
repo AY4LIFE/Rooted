@@ -8,7 +8,7 @@ import {
     View,
 } from 'react-native';
 
-import { Text } from '@/components/Themed';
+import { Text, useThemeColor } from '@/components/Themed';
 import { parseVerseReferences } from '@/services/verseParser';
 import { NoteContent } from './NoteContent';
 
@@ -31,6 +31,10 @@ export function NoteEditor({
   onEventNameChange,
   onVersePress,
 }: NoteEditorProps) {
+  const textColor = useThemeColor({}, 'text');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const cardBg = useThemeColor({}, 'card');
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -43,26 +47,26 @@ export function NoteEditor({
         keyboardShouldPersistTaps="always"
       >
         <TextInput
-          style={styles.titleInput}
+          style={[styles.titleInput, { color: textColor }]}
           placeholder="Note title"
-          placeholderTextColor="#999"
+          placeholderTextColor={placeholderColor}
           value={title}
           onChangeText={onTitleChange}
         />
         {onEventNameChange && (
           <TextInput
-            style={styles.eventInput}
+            style={[styles.eventInput, { color: textColor }]}
             placeholder="Event (e.g. Sunday Sermon)"
-            placeholderTextColor="#999"
+            placeholderTextColor={placeholderColor}
             value={eventName}
             onChangeText={onEventNameChange}
           />
         )}
         <Text style={styles.label}>Content</Text>
         <TextInput
-          style={styles.contentInput}
+          style={[styles.contentInput, { color: textColor }]}
           placeholder="Take notes... Type Bible references like John 3:16 to make them clickable."
-          placeholderTextColor="#999"
+          placeholderTextColor={placeholderColor}
           value={content}
           onChangeText={onContentChange}
           multiline
@@ -70,7 +74,7 @@ export function NoteEditor({
         {content.length > 0 && parseVerseReferences(content).length > 0 && (
           <>
             <Text style={styles.previewLabel}>Verses (tap to view)</Text>
-            <View style={styles.preview}>
+            <View style={[styles.preview, { backgroundColor: cardBg }]}>
               <NoteContent
                 content={content}
                 verseOnly
@@ -136,6 +140,5 @@ const styles = StyleSheet.create({
   preview: {
     padding: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.05)',
   },
 });

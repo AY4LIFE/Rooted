@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { Text, View } from '@/components/Themed';
+import { Text, View, useThemeColor } from '@/components/Themed';
 import type { Note } from '@/services/notesDb';
 
 interface NoteCardProps {
@@ -27,6 +27,7 @@ function formatDate(iso: string): string {
 }
 
 export function NoteCard({ note }: NoteCardProps) {
+  const cardBg = useThemeColor({}, 'card');
   const preview =
     note.content.length > 100
       ? note.content.slice(0, 100) + '...'
@@ -35,7 +36,7 @@ export function NoteCard({ note }: NoteCardProps) {
   return (
     <Link href={`/note/${note.id}`} asChild>
       <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-        <View style={styles.content} lightColor="#f9fafb" darkColor="#1f2937">
+        <View style={[styles.content, { backgroundColor: cardBg }]}>
           <Text style={styles.title} numberOfLines={1}>
             {note.title || 'Untitled'}
           </Text>

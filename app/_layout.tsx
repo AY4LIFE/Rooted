@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import { TranslationProvider } from '@/contexts/TranslationContext';
 
@@ -52,12 +53,13 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const backgroundColor = useThemeColor({}, 'background');
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
       <TranslationProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor }}>
             <OfflineBanner />
             <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

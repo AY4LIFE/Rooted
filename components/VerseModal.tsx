@@ -27,6 +27,10 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const backgroundColor = useThemeColor({}, 'background');
+  const overlayBg = useThemeColor({}, 'overlay');
+  const errorColor = useThemeColor({}, 'error');
+  const buttonSecondaryBg = useThemeColor({}, 'buttonSecondary');
+  const buttonSecondaryTextColor = useThemeColor({}, 'buttonSecondaryText');
 
   useEffect(() => {
     if (!visible || !parsed) {
@@ -90,7 +94,7 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
               <ActivityIndicator size="large" style={styles.loader} />
             )}
             {error && (
-              <Text style={styles.error}>{error}</Text>
+              <Text style={[styles.error, { color: errorColor }]}>{error}</Text>
             )}
             {text && !loading && (
               <ScrollView
@@ -107,10 +111,16 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
             )}
           </View>
           <Pressable
-            style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.closeButton,
+              { backgroundColor: buttonSecondaryBg },
+              pressed && styles.pressed,
+            ]}
             onPress={onClose}
           >
-            <Text style={styles.closeText}>Close</Text>
+            <Text style={[styles.closeText, { color: buttonSecondaryTextColor }]}>
+              Close
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -121,7 +131,6 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -162,7 +171,6 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 16,
-    color: '#dc2626',
   },
   verseText: {
     fontSize: 18,
@@ -171,7 +179,6 @@ const styles = StyleSheet.create({
   closeButton: {
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
     borderRadius: 8,
   },
   pressed: {
