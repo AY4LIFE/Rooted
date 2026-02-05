@@ -82,7 +82,7 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { backgroundColor: overlayBg }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.content, { backgroundColor }]}>
           <View style={styles.header}>
@@ -136,23 +136,24 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   content: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 24,
     maxWidth: 400,
     width: '100%',
     maxHeight: Dimensions.get('window').height * 0.75,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   reference: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: '600',
+    marginBottom: 6,
+    letterSpacing: 0.2,
   },
   translation: {
     fontSize: 14,
-    opacity: 0.7,
+    opacity: 0.75,
   },
   body: {
     minHeight: 80,
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   loader: {
     marginVertical: 24,
@@ -174,15 +175,15 @@ const styles = StyleSheet.create({
   },
   verseText: {
     fontSize: 18,
-    lineHeight: 28,
+    lineHeight: 30,
   },
   closeButton: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: 0.85,
   },
   closeText: {
     fontSize: 16,

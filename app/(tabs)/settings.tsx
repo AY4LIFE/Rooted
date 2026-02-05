@@ -111,22 +111,24 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 28,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 18,
-    marginBottom: 16,
-    opacity: 0.8,
+    fontSize: 16,
+    marginBottom: 20,
+    opacity: 0.75,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 6,
+    opacity: 0.9,
   },
   current: {
     fontSize: 14,
@@ -144,24 +146,25 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   listTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 10,
+    opacity: 0.9,
   },
   list: {
     flex: 1,
   },
   listContent: {
-    paddingBottom: 24,
+    paddingBottom: 28,
   },
   row: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   rowPressed: {
-    opacity: 0.8,
+    opacity: 0.88,
   },
   rowText: {
     fontSize: 16,

@@ -28,6 +28,7 @@ function formatDate(iso: string): string {
 
 export function NoteCard({ note }: NoteCardProps) {
   const cardBg = useThemeColor({}, 'card');
+  const accentColor = useThemeColor({}, 'accent');
   const preview =
     note.content.length > 100
       ? note.content.slice(0, 100) + '...'
@@ -36,7 +37,12 @@ export function NoteCard({ note }: NoteCardProps) {
   return (
     <Link href={`/note/${note.id}`} asChild>
       <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-        <View style={[styles.content, { backgroundColor: cardBg }]}>
+        <View
+          style={[
+            styles.content,
+            { backgroundColor: cardBg, borderLeftColor: accentColor },
+          ]}
+        >
           <Text style={styles.title} numberOfLines={1}>
             {note.title || 'Untitled'}
           </Text>
@@ -57,35 +63,43 @@ export function NoteCard({ note }: NoteCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 12,
+    marginHorizontal: 20,
+    marginVertical: 10,
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.92,
   },
   content: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 16,
+    borderLeftWidth: 4,
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '600',
+    marginBottom: 6,
+    letterSpacing: 0.2,
   },
   event: {
     fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 4,
+    opacity: 0.75,
+    marginBottom: 6,
   },
   preview: {
-    fontSize: 14,
-    opacity: 0.8,
-    marginBottom: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    opacity: 0.85,
+    marginBottom: 10,
   },
   date: {
-    fontSize: 12,
-    opacity: 0.6,
+    fontSize: 13,
+    opacity: 0.65,
   },
 });

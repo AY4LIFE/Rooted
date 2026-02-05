@@ -18,12 +18,22 @@ function TabBarIcon(props: {
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
+  const tint = Colors[colorScheme ?? 'light'].tint;
+  const bg = Colors[colorScheme ?? 'light'].background;
+  const border = Colors[colorScheme ?? 'light'].border;
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
+        tabBarActiveTintColor: tint,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
+        tabBarStyle: {
+          backgroundColor: bg,
+          borderTopColor: border,
+          borderTopWidth: 1,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen

@@ -1,44 +1,49 @@
-const tintColorLight = '#2f95dc';
-const tintColorDark = '#fff';
+// Calm, warm, church-friendly palette
+const tintColorLight = '#5a6d5a';   // sage green
+const tintColorDark = '#b8c9b8';     // soft sage
 
-export const verseLinkColorLight = '#2563eb';
-export const verseLinkColorDark = '#60a5fa';
+export const verseLinkColorLight = '#5a6d5a';
+export const verseLinkColorDark = '#9caa9c';
 
 export default {
   light: {
-    text: '#000',
-    background: '#fff',
+    text: '#3d3a36',
+    background: '#faf8f5',
     tint: tintColorLight,
-    tabIconDefault: '#ccc',
+    tabIconDefault: '#a8a29e',
     tabIconSelected: tintColorLight,
     verseLink: verseLinkColorLight,
-    card: '#f9fafb',
-    placeholder: '#9ca3af',
-    error: '#dc2626',
-    overlay: 'rgba(0,0,0,0.5)',
-    buttonSecondary: '#f3f4f6',
-    buttonSecondaryText: '#111',
-    banner: '#f59e0b',
-    bannerText: '#fff',
-    listRow: 'rgba(128,128,128,0.1)',
-    listRowSelected: 'rgba(59, 130, 246, 0.25)',
+    card: '#f3efe8',
+    placeholder: '#78716c',
+    error: '#b91c1c',
+    overlay: 'rgba(61, 58, 54, 0.4)',
+    buttonSecondary: '#e7e5e0',
+    buttonSecondaryText: '#3d3a36',
+    banner: '#a68b5b',
+    bannerText: '#faf8f5',
+    listRow: 'rgba(90, 109, 90, 0.08)',
+    listRowSelected: 'rgba(90, 109, 90, 0.18)',
+    accent: '#5a6d5a',
+    border: 'rgba(90, 109, 90, 0.2)',
   },
   dark: {
-    text: '#f3f4f6',
-    background: '#0f172a',
+    text: '#faf8f5',
+    background: '#1c1917',
     tint: tintColorDark,
-    tabIconDefault: '#64748b',
+    tabIconDefault: '#78716c',
     tabIconSelected: tintColorDark,
-    verseLink: '#93c5fd',
-    card: '#1e293b',
-    placeholder: '#64748b',
-    error: '#f87171',
-    overlay: 'rgba(0,0,0,0.75)',
-    buttonSecondary: '#334155',
-    buttonSecondaryText: '#f3f4f6',
-    banner: '#b45309',
-    bannerText: '#fff',
-    listRow: 'rgba(255,255,255,0.08)',
-    listRowSelected: 'rgba(96, 165, 250, 0.25)',
+    verseLink: '#9caa9c',
+    card: '#292524',
+    placeholder: '#a8a29e',
+    error: '#fca5a5',
+    overlay: 'rgba(0, 0, 0, 0.7)',
+    buttonSecondary: '#44403c',
+    buttonSecondaryText: '#faf8f5',
+    banner: '#78716c',
+    bannerText: '#faf8f5',
+    listRow: 'rgba(255, 255, 255, 0.06)',
+    listRowSelected: 'rgba(184, 201, 184, 0.2)',
+    accent: '#9caa9c',
+    border: 'rgba(184, 201, 184, 0.15)',
   },
 };

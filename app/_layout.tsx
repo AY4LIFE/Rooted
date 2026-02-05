@@ -12,7 +12,36 @@ import 'react-native-reanimated';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { TranslationProvider } from '@/contexts/TranslationContext';
+
+const RootThemeLight = {
+  ...DefaultTheme,
+  dark: false,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: Colors.light.tint,
+    background: Colors.light.background,
+    card: Colors.light.background,
+    text: Colors.light.text,
+    border: Colors.light.border,
+    notification: Colors.light.error,
+  },
+};
+
+const RootThemeDark = {
+  ...DarkTheme,
+  dark: true,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Colors.dark.tint,
+    background: Colors.dark.background,
+    card: Colors.dark.background,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+    notification: Colors.dark.error,
+  },
+};
 
 export {
     // Catch any errors thrown by the Layout component.
@@ -58,7 +87,7 @@ function RootLayoutNav() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
       <TranslationProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={colorScheme === 'dark' ? RootThemeDark : RootThemeLight}>
           <View style={{ flex: 1, backgroundColor }}>
             <OfflineBanner />
             <Stack>
