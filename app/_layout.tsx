@@ -50,7 +50,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: 'intro',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -91,16 +91,17 @@ function RootLayoutNav() {
           <View style={{ flex: 1, backgroundColor }}>
             <OfflineBanner />
             <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="note/[id]"
-            options={{
-              title: 'Note',
-              headerBackTitle: 'Back',
-            }}
-            />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-          </Stack>
+              <Stack.Screen name="intro" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="note/[id]"
+                options={{
+                  title: 'Note',
+                  headerBackTitle: 'Back',
+                }}
+              />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack>
           </View>
         </ThemeProvider>
       </TranslationProvider>
