@@ -22,10 +22,15 @@ export default function NoteScreen() {
     visible: boolean;
     parsed: ParsedVerse | null;
   }>({ visible: false, parsed: null });
+  const isSavedRef = useRef(false);
   const initialDataRef = useRef<{ title: string; content: string; eventName: string } | null>(null);
 
   const loadNote = useCallback(async () => {
-    if (isNew) return;
+    if (isNew) {
+      isSavedRef.current = false;
+      initialDataRef.current = null;
+      return;
+    }
     const note = await getNote(noteId!);
     if (note) {
       setTitle(note.title);
@@ -36,8 +41,10 @@ export default function NoteScreen() {
         content: note.content,
         eventName: note.event_name || '',
       };
+      isSavedRef.current = true; // Existing note is considered saved
     } else {
       initialDataRef.current = null;
+      isSavedRef.current = false;
     }
   }, [noteId, isNew]);
 
@@ -46,6 +53,8 @@ export default function NoteScreen() {
   }, [loadNote]);
 
   const hasUnsavedChanges = useCallback(() => {
+    // If we just saved, don't show unsaved changes prompt
+    if (isSavedRef.current) return false;
     if (isNew) return title.trim().length > 0 || content.trim().length > 0;
     const initial = initialDataRef.current;
     if (!initial) return false;
@@ -69,15 +78,23 @@ export default function NoteScreen() {
           content,
           eventName.trim() || null
         );
+        // Update initial data before navigation to prevent unsaved changes prompt
         initialDataRef.current = {
           title: title.trim(),
           content,
           eventName: eventName.trim() || '',
         };
+        isSavedRef.current = true;
         router.replace(`/note/${note.id}`);
       } else {
         await updateNote(noteId!, title.trim(), content, eventName.trim() || null);
-        initialDataRef.current = { title: title.trim(), content, eventName: eventName.trim() || '' };
+        // Update initial data immediately after save
+        initialDataRef.current = { 
+          title: title.trim(), 
+          content, 
+          eventName: eventName.trim() || '' 
+        };
+        isSavedRef.current = true;
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to save note');
@@ -130,7 +147,11 @@ export default function NoteScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      if (!hasUnsavedChanges()) return;
+      // Check if there are unsaved changes
+      if (!hasUnsavedChanges()) {
+        // No unsaved changes, allow navigation
+        return;
+      }
 
       e.preventDefault();
 
@@ -138,26 +159,55 @@ export default function NoteScreen() {
         'Discard changes?',
         'You have unsaved changes. Save before leaving?',
         [
-          { text: "Don't save", style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
-          { text: 'Save', onPress: async () => {
-            if (!title.trim()) {
+          { 
+            text: "Don't save", 
+            style: 'destructive', 
+            onPress: () => {
+              // Allow navigation without saving
               navigation.dispatch(e.data.action);
-              return;
             }
-            try {
-              if (isNew) {
-                const note = await createNote(title.trim(), content, eventName.trim() || null);
-                initialDataRef.current = { title: title.trim(), content, eventName: eventName.trim() || '' };
-                router.replace(`/note/${note.id}`);
+          },
+          { 
+            text: 'Save', 
+            onPress: async () => {
+              if (!title.trim()) {
+                // No title, can't save - just navigate away
                 navigation.dispatch(e.data.action);
-              } else {
-                await updateNote(noteId!, title.trim(), content, eventName.trim() || null);
-                navigation.dispatch(e.data.action);
+                return;
               }
-            } catch {
-              Alert.alert('Error', 'Failed to save note');
+              try {
+                if (isNew) {
+                  const note = await createNote(title.trim(), content, eventName.trim() || null);
+                  // Update initial data to prevent duplicate save prompts
+                  initialDataRef.current = { 
+                    title: title.trim(), 
+                    content, 
+                    eventName: eventName.trim() || '' 
+                  };
+                  isSavedRef.current = true;
+                  // Navigate to the saved note, then back
+                  router.replace(`/note/${note.id}`);
+                  // Small delay to ensure route replacement completes
+                  setTimeout(() => {
+                    navigation.dispatch(e.data.action);
+                  }, 100);
+                } else {
+                  await updateNote(noteId!, title.trim(), content, eventName.trim() || null);
+                  // Update initial data immediately after save
+                  initialDataRef.current = { 
+                    title: title.trim(), 
+                    content, 
+                    eventName: eventName.trim() || '' 
+                  };
+                  isSavedRef.current = true;
+                  // Allow navigation after save
+                  navigation.dispatch(e.data.action);
+                }
+              } catch {
+                Alert.alert('Error', 'Failed to save note');
+              }
             }
-          }},
+          },
           { text: 'Cancel', style: 'cancel' },
         ]
       );
@@ -192,9 +242,18 @@ export default function NoteScreen() {
         title={title}
         content={content}
         eventName={eventName}
-        onTitleChange={setTitle}
-        onContentChange={setContent}
-        onEventNameChange={setEventName}
+        onTitleChange={(value) => {
+          setTitle(value);
+          isSavedRef.current = false; // Mark as unsaved when content changes
+        }}
+        onContentChange={(value) => {
+          setContent(value);
+          isSavedRef.current = false; // Mark as unsaved when content changes
+        }}
+        onEventNameChange={(value) => {
+          setEventName(value);
+          isSavedRef.current = false; // Mark as unsaved when content changes
+        }}
         onVersePress={handleVersePress}
       />
       <VerseModal
