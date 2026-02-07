@@ -1,3 +1,4 @@
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from '@/contexts/TranslationContext';
 import type { BibleTranslation } from '@/services/bibleApi';
 import { fetchEnglishTranslations } from '@/services/bibleApi';
@@ -11,15 +12,29 @@ import {
 } from 'react-native';
 
 import { Text, useThemeColor } from '@/components/Themed';
+import {
+  getAccountabilityIntervals,
+} from '@/services/accountabilitySettings';
+import {
+  getNotificationPermissionsStatus,
+  requestPermissions,
+} from '@/services/notifications';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const { translationId, translationName, setTranslation } = useTranslation();
   const [translations, setTranslations] = useState<BibleTranslation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reminderIntervals, setReminderIntervals] = useState<number[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<{
+    granted: boolean;
+    canAskAgain: boolean;
+  }>({ granted: false, canAskAgain: true });
   const errorColor = useThemeColor({}, 'error');
   const listRowBg = useThemeColor({}, 'listRow');
   const listRowSelectedBg = useThemeColor({}, 'listRowSelected');
+  const accentColor = useThemeColor({}, 'accent');
 
   const loadTranslations = useCallback(async () => {
     setLoading(true);
@@ -37,6 +52,31 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadTranslations();
   }, [loadTranslations]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadReminderSettings();
+    }, [loadReminderSettings])
+  );
+
+  const loadReminderSettings = useCallback(async () => {
+    try {
+      const intervals = await getAccountabilityIntervals();
+      setReminderIntervals(intervals);
+      const permStatus = await getNotificationPermissionsStatus();
+      setNotificationPermission(permStatus);
+    } catch (error) {
+      console.error('Failed to load reminder settings:', error);
+    }
+  }, []);
+
+  const handleRequestPermission = useCallback(async () => {
+    const granted = await requestPermissions();
+    if (granted) {
+      const permStatus = await getNotificationPermissionsStatus();
+      setNotificationPermission(permStatus);
+    }
+  }, []);
 
   const onSelect = useCallback(
     (t: BibleTranslation) => {
@@ -80,6 +120,46 @@ export default function SettingsScreen() {
         <Text style={styles.current}>
           Current: {translationName} ({translationId})
         </Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Accountability Reminders</Text>
+        <Text style={styles.current}>
+          Intervals: {reminderIntervals.length > 0
+            ? reminderIntervals.map((d) => `${d} day${d !== 1 ? 's' : ''}`).join(', ')
+            : 'Not configured'}
+        </Text>
+        <Link href="/(tabs)/settings/reminders" asChild>
+          <Pressable
+            style={({ pressed }) => [
+              styles.configButton,
+              { backgroundColor: accentColor },
+              pressed && styles.configButtonPressed,
+            ]}
+          >
+            <Text style={styles.configButtonText}>Configure Intervals</Text>
+          </Pressable>
+        </Link>
+        <View style={styles.permissionSection}>
+          <Text style={styles.permissionLabel}>
+            Notifications: {notificationPermission.granted ? 'Enabled' : 'Disabled'}
+          </Text>
+          {!notificationPermission.granted && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.permissionButton,
+                pressed && styles.permissionButtonPressed,
+              ]}
+              onPress={handleRequestPermission}
+            >
+              <Text style={styles.permissionButtonText}>
+                {notificationPermission.canAskAgain
+                  ? 'Enable Notifications'
+                  : 'Enable in Settings'}
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {loading && (
@@ -176,5 +256,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.7,
     marginTop: 2,
+  },
+  configButton: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  configButtonPressed: {
+    opacity: 0.85,
+  },
+  configButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#faf8f5',
+  },
+  permissionSection: {
+    marginTop: 12,
+  },
+  permissionLabel: {
+    fontSize: 14,
+    opacity: 0.8,
+    marginBottom: 8,
+  },
+  permissionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  permissionButtonPressed: {
+    opacity: 0.7,
+  },
+  permissionButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    opacity: 0.9,
   },
 });

@@ -1,7 +1,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View } from 'react-native';
@@ -14,6 +14,10 @@ import { useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { TranslationProvider } from '@/contexts/TranslationContext';
+import {
+  requestPermissions,
+  setupNotificationHandlers,
+} from '@/services/notifications';
 
 const RootThemeLight = {
   ...DefaultTheme,
@@ -83,6 +87,21 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const backgroundColor = useThemeColor({}, 'background');
+  const router = useRouter();
+
+  useEffect(() => {
+    // Request notification permissions on app start
+    requestPermissions().catch((error) => {
+      console.error('Failed to request notification permissions:', error);
+    });
+
+    // Set up notification handlers
+    const cleanup = setupNotificationHandlers((noteId) => {
+      router.push(`/accountability/${noteId}`);
+    });
+
+    return cleanup;
+  }, [router]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor }}>
@@ -101,6 +120,14 @@ function RootLayoutNav() {
                 }}
               />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              <Stack.Screen
+                name="accountability/[noteId]"
+                options={{
+                  title: 'Reflection',
+                  headerBackTitle: 'Back',
+                  presentation: 'modal',
+                }}
+              />
             </Stack>
           </View>
         </ThemeProvider>
