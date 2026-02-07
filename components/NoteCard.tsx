@@ -1,12 +1,15 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import type { Note } from '@/services/notesDb';
 
 interface NoteCardProps {
   note: Note;
+  isSelected?: boolean;
+  onLongPress?: () => void;
+  onPress?: () => void;
 }
 
 function formatDate(iso: string): string {
@@ -26,7 +29,13 @@ function formatDate(iso: string): string {
   return date.toLocaleDateString();
 }
 
-export function NoteCard({ note }: NoteCardProps) {
+export function NoteCard({
+  note,
+  isSelected = false,
+  onLongPress,
+  onPress,
+}: NoteCardProps) {
+  const router = useRouter();
   const cardBg = useThemeColor({}, 'card');
   const accentColor = useThemeColor({}, 'accent');
   const preview =
@@ -34,15 +43,42 @@ export function NoteCard({ note }: NoteCardProps) {
       ? note.content.slice(0, 100) + '...'
       : note.content;
 
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    } else {
+      router.push(`/note/${note.id}`);
+    }
+  };
+
   return (
-    <Link href={`/note/${note.id}`} asChild>
-      <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <View style={styles.cardContainer}>
+      <TouchableOpacity
+        style={[
+          styles.card,
+          isSelected && styles.cardSelected,
+        ]}
+        onLongPress={onLongPress}
+        onPress={handlePress}
+        activeOpacity={0.7}
+        delayLongPress={500}
+      >
         <View
           style={[
             styles.content,
-            { backgroundColor: cardBg, borderLeftColor: accentColor },
+            {
+              backgroundColor: cardBg,
+              borderLeftColor: accentColor,
+              borderWidth: isSelected ? 2 : 0,
+              borderColor: isSelected ? accentColor : 'transparent',
+            },
           ]}
         >
+          {isSelected && (
+            <View style={[styles.selectedIndicator, { backgroundColor: accentColor }]}>
+              <Text style={styles.selectedIndicatorText}>✓</Text>
+            </View>
+          )}
           <Text style={styles.title} numberOfLines={1}>
             {note.title || 'Untitled'}
           </Text>
@@ -56,15 +92,17 @@ export function NoteCard({ note }: NoteCardProps) {
           </Text>
           <Text style={styles.date}>{formatDate(note.updated_at)}</Text>
         </View>
-      </Pressable>
-    </Link>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  cardContainer: {
     marginHorizontal: 20,
     marginVertical: 10,
+  },
+  card: {
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -73,13 +111,29 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  pressed: {
-    opacity: 0.92,
+  cardSelected: {
+    opacity: 0.95,
   },
   content: {
     padding: 18,
     borderRadius: 16,
     borderLeftWidth: 4,
+    position: 'relative',
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedIndicatorText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 18,

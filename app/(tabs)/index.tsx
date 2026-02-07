@@ -2,7 +2,9 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Alert,
   FlatList,
+  Pressable,
   RefreshControl,
   StyleSheet,
   TextInput,
@@ -11,7 +13,7 @@ import {
 import { NoteCard } from '@/components/NoteCard';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import type { Note } from '@/services/notesDb';
-import { getAllNotes } from '@/services/notesDb';
+import { deleteNote, getAllNotes } from '@/services/notesDb';
 
 function formatDateForSearch(iso: string): string {
   const d = new Date(iso);
@@ -39,10 +41,12 @@ export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const accentColor = useThemeColor({}, 'accent');
   const placeholderColor = useThemeColor({}, 'placeholder');
   const textColor = useThemeColor({}, 'text');
   const cardBg = useThemeColor({}, 'card');
+  const buttonTextColor = useThemeColor({}, 'background');
 
   const filteredNotes = useMemo(
     () => notes.filter((n) => noteMatchesSearch(n, searchQuery)),
@@ -66,16 +70,90 @@ export default function NotesScreen() {
     setRefreshing(false);
   }, [loadNotes]);
 
+  const handleLongPress = useCallback((noteId: string) => {
+    setSelectedNoteId(noteId);
+  }, []);
+
+  const handleDeselect = useCallback(() => {
+    setSelectedNoteId(null);
+  }, []);
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (!selectedNoteId) return;
+
+    const note = notes.find((n) => n.id === selectedNoteId);
+    if (!note) return;
+
+    Alert.alert(
+      'Delete Note',
+      `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: handleDeselect },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteNote(note.id);
+              setSelectedNoteId(null);
+              await loadNotes();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete note');
+            }
+          },
+        },
+      ]
+    );
+  }, [selectedNoteId, notes, loadNotes, handleDeselect]);
+
   const showEmptySearch = searchQuery.trim().length > 0 && filteredNotes.length === 0;
   const showEmptyList = notes.length === 0;
 
   return (
     <View style={styles.container}>
+      {selectedNoteId && (
+        <View style={[styles.actionBar, { backgroundColor: cardBg }]}>
+          <Text style={styles.actionBarText}>
+            {notes.find((n) => n.id === selectedNoteId)?.title || 'Note'} selected
+          </Text>
+          <View style={styles.actionButtons}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+              ]}
+              onPress={handleDeselect}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.deleteActionButton,
+                { backgroundColor: accentColor },
+                pressed && styles.deleteActionButtonPressed,
+              ]}
+              onPress={handleDeleteSelected}
+            >
+              <Text style={[styles.deleteActionButtonText, { color: buttonTextColor }]}>
+                Delete
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       <FlatList
         data={filteredNotes}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NoteCard note={item} />}
+        renderItem={({ item }) => (
+          <NoteCard
+            note={item}
+            isSelected={selectedNoteId === item.id}
+            onLongPress={() => handleLongPress(item.id)}
+            onPress={selectedNoteId ? handleDeselect : undefined}
+          />
+        )}
         contentContainerStyle={styles.list}
+        scrollEnabled={!selectedNoteId}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Notes</Text>
@@ -186,5 +264,53 @@ const styles = StyleSheet.create({
     fontSize: 15,
     opacity: 0.7,
     textAlign: 'center',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(0,0,0,0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  actionBarText: {
+    fontSize: 16,
+    fontWeight: '600',
+    flex: 1,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  cancelButtonPressed: {
+    opacity: 0.7,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.8,
+  },
+  deleteActionButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  deleteActionButtonPressed: {
+    opacity: 0.85,
+  },
+  deleteActionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

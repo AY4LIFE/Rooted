@@ -1,4 +1,5 @@
 import { getDatabase } from './db';
+import { scheduleRemindersForNote, cancelRemindersForNote } from './notifications';
 
 export interface Note {
   id: string;
@@ -44,7 +45,7 @@ export async function createNote(
     [id, title, content, now, now, event_name]
   );
 
-  return {
+  const note = {
     id,
     title,
     content,
@@ -52,6 +53,13 @@ export async function createNote(
     updated_at: now,
     event_name,
   };
+
+  // Schedule accountability reminders
+  scheduleRemindersForNote(id).catch((error) => {
+    console.error('Failed to schedule reminders for note:', error);
+  });
+
+  return note;
 }
 
 export async function updateNote(
@@ -71,5 +79,9 @@ export async function updateNote(
 
 export async function deleteNote(id: string): Promise<void> {
   const db = await getDatabase();
+  
+  // Cancel any pending reminders
+  await cancelRemindersForNote(id);
+  
   await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
 }

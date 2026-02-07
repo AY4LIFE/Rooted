@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Alert, Pressable } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { NoteEditor } from '@/components/NoteEditor';
 import { Text } from '@/components/Themed';
 import { VerseModal } from '@/components/VerseModal';
-import { createNote, getNote, updateNote } from '@/services/notesDb';
+import { createNote, deleteNote, getNote, updateNote } from '@/services/notesDb';
 import type { ParsedVerse } from '@/services/verseParser';
 
 export default function NoteScreen() {
@@ -84,16 +84,49 @@ export default function NoteScreen() {
     }
   }, [noteId, isNew, title, content, eventName, router]);
 
+  const handleDelete = useCallback(() => {
+    if (isNew) return;
+
+    Alert.alert(
+      'Delete Note',
+      'Are you sure you want to delete this note? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteNote(noteId!);
+              router.back();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete note');
+            }
+          },
+        },
+      ]
+    );
+  }, [isNew, noteId, router]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isNew ? 'New Note' : 'Edit Note',
       headerRight: () => (
-        <Pressable onPress={handleSave} style={{ padding: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Save</Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {!isNew && (
+            <Pressable onPress={handleDelete} style={{ padding: 8, marginRight: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#dc2626' }}>
+                Delete
+              </Text>
+            </Pressable>
+          )}
+          <Pressable onPress={handleSave} style={{ padding: 8 }}>
+            <Text style={{ fontSize: 16, fontWeight: '600' }}>Save</Text>
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, handleSave, isNew]);
+  }, [navigation, handleSave, handleDelete, isNew]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {

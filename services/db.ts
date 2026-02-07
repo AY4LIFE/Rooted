@@ -32,6 +32,21 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
     CREATE INDEX IF NOT EXISTS idx_verse_cache_lookup 
     ON verse_cache(translation, book, chapter, verse_start, verse_end);
+
+    CREATE TABLE IF NOT EXISTS accountability_reminders (
+      id TEXT PRIMARY KEY NOT NULL,
+      note_id TEXT NOT NULL,
+      scheduled_for TEXT NOT NULL,
+      reminder_index INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      triggered_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_accountability_note_id 
+    ON accountability_reminders(note_id);
+
+    CREATE INDEX IF NOT EXISTS idx_accountability_scheduled_for 
+    ON accountability_reminders(scheduled_for);
   `);
 
   return database;
