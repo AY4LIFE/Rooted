@@ -5,6 +5,7 @@ import { fetchEnglishTranslations } from '@/services/bibleApi';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     Pressable,
     StyleSheet,
@@ -18,6 +19,7 @@ import {
 import {
   getNotificationPermissionsStatus,
   requestPermissions,
+  testNotification,
 } from '@/services/notifications';
 
 export default function SettingsScreen() {
@@ -35,6 +37,7 @@ export default function SettingsScreen() {
   const listRowBg = useThemeColor({}, 'listRow');
   const listRowSelectedBg = useThemeColor({}, 'listRowSelected');
   const accentColor = useThemeColor({}, 'accent');
+  const buttonTextColor = useThemeColor({}, 'background');
 
   const loadTranslations = useCallback(async () => {
     setLoading(true);
@@ -77,6 +80,23 @@ export default function SettingsScreen() {
       setNotificationPermission(permStatus);
     }
   }, []);
+
+  const handleTestNotification = useCallback(async () => {
+    if (!notificationPermission.granted) {
+      Alert.alert('Permission Required', 'Please enable notifications first');
+      return;
+    }
+
+    const success = await testNotification();
+    if (success) {
+      Alert.alert(
+        'Test Notification Sent',
+        'You should receive a notification in 5 seconds. Make sure your device is not in silent/Do Not Disturb mode.'
+      );
+    } else {
+      Alert.alert('Error', 'Failed to send test notification');
+    }
+  }, [notificationPermission.granted]);
 
   const onSelect = useCallback(
     (t: BibleTranslation) => {
@@ -156,6 +176,20 @@ export default function SettingsScreen() {
                 {notificationPermission.canAskAgain
                   ? 'Enable Notifications'
                   : 'Enable in Settings'}
+              </Text>
+            </Pressable>
+          )}
+          {notificationPermission.granted && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.testButton,
+                { backgroundColor: accentColor },
+                pressed && styles.testButtonPressed,
+              ]}
+              onPress={handleTestNotification}
+            >
+              <Text style={[styles.testButtonText, { color: buttonTextColor }]}>
+                Test Notification
               </Text>
             </Pressable>
           )}
@@ -293,5 +327,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     opacity: 0.9,
+  },
+  testButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  testButtonPressed: {
+    opacity: 0.85,
+  },
+  testButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

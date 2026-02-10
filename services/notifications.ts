@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 import { getAccountabilityIntervals } from './accountabilitySettings';
@@ -13,6 +14,9 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+// Check if running in Expo Go (local notifications work, but remote don't)
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 const ACCOUNTABILITY_QUESTIONS = [
   'What do you plan to change concerning what you have learnt?',
@@ -52,13 +56,20 @@ export async function requestPermissions(): Promise<boolean> {
       finalStatus = status;
     }
 
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'Accountability Reminders',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#5a6d5a',
-      });
+    if (Platform.OS === 'android' && !isExpoGo) {
+      // Only set notification channel for development builds
+      // Expo Go handles this automatically
+      try {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Accountability Reminders',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#5a6d5a',
+        });
+      } catch (error) {
+        // Ignore errors in Expo Go - local notifications still work
+        console.log('Notification channel setup skipped (Expo Go)');
+      }
     }
 
     return finalStatus === 'granted';
@@ -101,17 +112,26 @@ export async function scheduleRemindersForNote(noteId: string): Promise<void> {
     }
 
     const reminderId = generateReminderId();
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: `Time to Reflect: ${note.title}`,
-        body: getRandomQuestion(),
-        data: { noteId, type: 'accountability', reminderId },
-        sound: true,
-      },
-      trigger: {
-        date: scheduledFor,
-      },
-    });
+    try {
+      // Local notifications work in Expo Go (remote push notifications don't)
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `Time to Reflect: ${note.title}`,
+          body: getRandomQuestion(),
+          data: { noteId, type: 'accountability', reminderId },
+          sound: true,
+        },
+        trigger: {
+          type: 'date',
+          date: scheduledFor,
+        },
+      });
+    } catch (error) {
+      // In Expo Go, local notifications should still work despite the warning
+      // The warning is about remote push notifications, which we don't use
+      console.log('Note: Local notifications may require a development build for full functionality');
+      console.error('Failed to schedule notification:', error);
+    }
 
     // Store reminder in database
     await db.runAsync(
@@ -162,6 +182,32 @@ export async function markReminderTriggered(reminderId: string): Promise<void> {
     `UPDATE accountability_reminders SET triggered_at = ? WHERE id = ?`,
     [new Date().toISOString(), reminderId]
   );
+}
+
+export async function testNotification(): Promise<boolean> {
+  try {
+    // Schedule a test notification for 5 seconds from now
+    const testDate = new Date();
+    testDate.setSeconds(testDate.getSeconds() + 5);
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Test Notification',
+        body: 'If you see this, notifications are working!',
+        data: { type: 'test' },
+        sound: true,
+      },
+      trigger: {
+        type: 'date',
+        date: testDate,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Failed to schedule test notification:', error);
+    return false;
+  }
 }
 
 export function setupNotificationHandlers(
