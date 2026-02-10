@@ -1,6 +1,8 @@
+import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Dimensions,
     Modal,
     Platform,
@@ -31,6 +33,8 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
   const errorColor = useThemeColor({}, 'error');
   const buttonSecondaryBg = useThemeColor({}, 'buttonSecondary');
   const buttonSecondaryTextColor = useThemeColor({}, 'buttonSecondaryText');
+  const accentColor = useThemeColor({}, 'accent');
+  const buttonTextColor = useThemeColor({}, 'background');
 
   useEffect(() => {
     if (!visible || !parsed) {
@@ -75,6 +79,18 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
     parsed.verseEnd !== parsed.verseStart ? `-${parsed.verseEnd}` : ''
   }`;
 
+  const handleCopy = async () => {
+    if (!text) return;
+    
+    const textToCopy = `${reference}\n${text}`;
+    try {
+      await Clipboard.setStringAsync(textToCopy);
+      Alert.alert('Copied!', 'Verse text has been copied to clipboard');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy verse text');
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -110,18 +126,34 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
               </ScrollView>
             )}
           </View>
-          <Pressable
-            style={({ pressed }) => [
-              styles.closeButton,
-              { backgroundColor: buttonSecondaryBg },
-              pressed && styles.pressed,
-            ]}
-            onPress={onClose}
-          >
-            <Text style={[styles.closeText, { color: buttonSecondaryTextColor }]}>
-              Close
-            </Text>
-          </Pressable>
+          <View style={styles.buttonRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.copyButton,
+                { backgroundColor: accentColor },
+                pressed && styles.pressed,
+                !text && styles.buttonDisabled,
+              ]}
+              onPress={handleCopy}
+              disabled={!text}
+            >
+              <Text style={[styles.copyText, { color: buttonTextColor }]}>
+                Copy
+              </Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.closeButton,
+                { backgroundColor: buttonSecondaryBg },
+                pressed && styles.pressed,
+              ]}
+              onPress={onClose}
+            >
+              <Text style={[styles.closeText, { color: buttonSecondaryTextColor }]}>
+                Close
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
@@ -177,13 +209,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 30,
   },
+  buttonRow: {
+    flexDirection: 'row',
+  },
+  copyButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    marginRight: 12,
+  },
   closeButton: {
+    flex: 1,
     paddingVertical: 14,
     alignItems: 'center',
     borderRadius: 12,
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   pressed: {
     opacity: 0.85,
+  },
+  copyText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   closeText: {
     fontSize: 16,
