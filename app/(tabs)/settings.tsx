@@ -9,6 +9,7 @@ import {
     FlatList,
     Pressable,
     StyleSheet,
+    Switch,
     View,
 } from 'react-native';
 
@@ -21,6 +22,7 @@ import {
   requestPermissions,
   testNotification,
 } from '@/services/notifications';
+import { getFocusMode, setFocusMode } from '@/services/focusMode';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -33,6 +35,7 @@ export default function SettingsScreen() {
     granted: boolean;
     canAskAgain: boolean;
   }>({ granted: false, canAskAgain: true });
+  const [focusModeEnabled, setFocusModeEnabled] = useState(true);
   const errorColor = useThemeColor({}, 'error');
   const listRowBg = useThemeColor({}, 'listRow');
   const listRowSelectedBg = useThemeColor({}, 'listRowSelected');
@@ -59,6 +62,7 @@ export default function SettingsScreen() {
   useFocusEffect(
     useCallback(() => {
       loadReminderSettings();
+      getFocusMode().then(setFocusModeEnabled);
     }, [loadReminderSettings])
   );
 
@@ -79,6 +83,11 @@ export default function SettingsScreen() {
       const permStatus = await getNotificationPermissionsStatus();
       setNotificationPermission(permStatus);
     }
+  }, []);
+
+  const handleToggleFocusMode = useCallback(async (value: boolean) => {
+    setFocusModeEnabled(value);
+    await setFocusMode(value);
   }, []);
 
   const handleTestNotification = useCallback(async () => {
@@ -134,6 +143,24 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.subtitle}>Rooted – Bible Note-Taking</Text>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Focus Mode</Text>
+        <Text style={styles.current}>
+          Reminds you to silence your phone when opening the app
+        </Text>
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>
+            {focusModeEnabled ? 'Enabled' : 'Disabled'}
+          </Text>
+          <Switch
+            value={focusModeEnabled}
+            onValueChange={handleToggleFocusMode}
+            trackColor={{ false: '#a8a29e', true: accentColor }}
+            thumbColor="#faf8f5"
+          />
+        </View>
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Bible translation</Text>
@@ -341,5 +368,16 @@ const styles = StyleSheet.create({
   testButtonText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  switchLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.8,
   },
 });

@@ -10,10 +10,12 @@ import {
   TextInput,
 } from 'react-native';
 
+import { FocusModeBanner } from '@/components/FocusModeBanner';
 import { NoteCard } from '@/components/NoteCard';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import type { Note } from '@/services/notesDb';
 import { deleteNote, getAllNotes } from '@/services/notesDb';
+import { getFocusMode } from '@/services/focusMode';
 
 function formatDateForSearch(iso: string): string {
   const d = new Date(iso);
@@ -42,6 +44,7 @@ export default function NotesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [focusModeEnabled, setFocusModeEnabled] = useState(false);
   const accentColor = useThemeColor({}, 'accent');
   const placeholderColor = useThemeColor({}, 'placeholder');
   const textColor = useThemeColor({}, 'text');
@@ -61,6 +64,7 @@ export default function NotesScreen() {
   useFocusEffect(
     useCallback(() => {
       loadNotes();
+      getFocusMode().then(setFocusModeEnabled);
     }, [loadNotes])
   );
 
@@ -156,6 +160,7 @@ export default function NotesScreen() {
         scrollEnabled={!selectedNoteId}
         ListHeaderComponent={
           <View style={styles.header}>
+            {focusModeEnabled && <FocusModeBanner />}
             <Text style={styles.headerTitle}>Notes</Text>
             <Text style={styles.headerSubtitle}>
               Your reflections and sermon notes

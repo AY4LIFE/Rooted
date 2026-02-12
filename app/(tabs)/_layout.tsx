@@ -1,11 +1,13 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
-import React from 'react';
-import { Pressable } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Pressable, View } from 'react-native';
 
+import { FocusModeOverlay } from '@/components/FocusModeOverlay';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { getFocusMode } from '@/services/focusMode';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -17,12 +19,29 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayChecked, setOverlayChecked] = useState(false);
 
   const tint = Colors[colorScheme ?? 'light'].tint;
   const bg = Colors[colorScheme ?? 'light'].background;
   const border = Colors[colorScheme ?? 'light'].border;
 
+  useEffect(() => {
+    // Check focus mode on first render (entry from intro)
+    getFocusMode().then((enabled) => {
+      if (enabled) {
+        setShowOverlay(true);
+      }
+      setOverlayChecked(true);
+    });
+  }, []);
+
+  const handleOverlayDismiss = useCallback(() => {
+    setShowOverlay(false);
+  }, []);
+
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: tint,
@@ -65,5 +84,9 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    {overlayChecked && (
+      <FocusModeOverlay visible={showOverlay} onDismiss={handleOverlayDismiss} />
+    )}
+    </View>
   );
 }
