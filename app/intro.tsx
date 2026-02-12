@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Image, Pressable, StyleSheet } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -13,11 +13,12 @@ export default function IntroScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.center}>
-        <View style={[styles.badge, { borderColor: accent }]}>
-          <View style={[styles.badgeInner, { backgroundColor: accent }]} />
-        </View>
+        <Image
+          source={require('../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
 
-        <Text style={styles.title}>Rooted</Text>
         <Text style={styles.subtitle}>Your Bible Note-Taking Companion</Text>
 
         <Text style={styles.verse}>
@@ -54,26 +55,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 32,
-  },
-  badgeInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: '600',
-    letterSpacing: 0.4,
-    marginBottom: 8,
-    textAlign: 'center',
+  logo: {
+    width: 240,
+    height: 240,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
