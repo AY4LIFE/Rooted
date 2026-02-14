@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { NoteEditor } from '@/components/NoteEditor';
 import { Text } from '@/components/Themed';
@@ -18,6 +18,7 @@ export default function NoteScreen() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [eventName, setEventName] = useState('');
+  const [loading, setLoading] = useState(!isNew);
   const [verseModal, setVerseModal] = useState<{
     visible: boolean;
     parsed: ParsedVerse | null;
@@ -31,22 +32,35 @@ export default function NoteScreen() {
       initialDataRef.current = null;
       return;
     }
-    const note = await getNote(noteId!);
-    if (note) {
-      setTitle(note.title);
-      setContent(note.content);
-      setEventName(note.event_name || '');
-      initialDataRef.current = {
-        title: note.title,
-        content: note.content,
-        eventName: note.event_name || '',
-      };
-      isSavedRef.current = true; // Existing note is considered saved
-    } else {
-      initialDataRef.current = null;
-      isSavedRef.current = false;
+    setLoading(true);
+    try {
+      const note = await getNote(noteId!);
+      if (note) {
+        setTitle(note.title);
+        setContent(note.content);
+        setEventName(note.event_name || '');
+        initialDataRef.current = {
+          title: note.title,
+          content: note.content,
+          eventName: note.event_name || '',
+        };
+        isSavedRef.current = true; // Existing note is considered saved
+      } else {
+        initialDataRef.current = null;
+        isSavedRef.current = false;
+        Alert.alert('Not Found', 'This note could not be found.', [
+          { text: 'Go Back', onPress: () => router.back() },
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to load note:', error);
+      Alert.alert('Error', 'Could not load this note. Please try again.', [
+        { text: 'Go Back', onPress: () => router.back() },
+      ]);
+    } finally {
+      setLoading(false);
     }
-  }, [noteId, isNew]);
+  }, [noteId, isNew, router]);
 
   useEffect(() => {
     loadNote();
@@ -236,6 +250,14 @@ export default function NoteScreen() {
     });
   };
 
+  if (loading) {
+    return (
+      <View style={noteStyles.loadingContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <>
       <NoteEditor
@@ -264,3 +286,11 @@ export default function NoteScreen() {
     </>
   );
 }
+
+const noteStyles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

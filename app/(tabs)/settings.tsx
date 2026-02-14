@@ -38,9 +38,6 @@ export default function SettingsScreen() {
   }>({ granted: false, canAskAgain: true });
   const [focusModeEnabled, setFocusModeEnabled] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const errorColor = useThemeColor({}, 'error');
-  const listRowBg = useThemeColor({}, 'listRow');
-  const listRowSelectedBg = useThemeColor({}, 'listRowSelected');
   const accentColor = useThemeColor({}, 'accent');
   const buttonTextColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -152,7 +149,7 @@ export default function SettingsScreen() {
         </Pressable>
       );
     },
-    [translationId, onSelect, listRowBg, listRowSelectedBg]
+    [translationId, onSelect]
   );
 
   const listHeader = React.useMemo(

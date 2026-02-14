@@ -29,7 +29,7 @@ function formatDate(iso: string): string {
   return date.toLocaleDateString();
 }
 
-export function NoteCard({
+export const NoteCard = React.memo(function NoteCard({
   note,
   isSelected = false,
   onLongPress,
@@ -95,7 +95,7 @@ export function NoteCard({
       </TouchableOpacity>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cardContainer: {

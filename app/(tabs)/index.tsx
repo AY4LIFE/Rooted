@@ -2,6 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -43,6 +44,7 @@ export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [focusModeEnabled, setFocusModeEnabled] = useState(false);
   const accentColor = useThemeColor({}, 'accent');
@@ -57,8 +59,15 @@ export default function NotesScreen() {
   );
 
   const loadNotes = useCallback(async () => {
-    const data = await getAllNotes();
-    setNotes(data);
+    try {
+      const data = await getAllNotes();
+      setNotes(data);
+    } catch (error) {
+      console.error('Failed to load notes:', error);
+      Alert.alert('Error', 'Could not load your notes. Please try again.');
+    } finally {
+      setInitialLoading(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -70,8 +79,11 @@ export default function NotesScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadNotes();
-    setRefreshing(false);
+    try {
+      await loadNotes();
+    } finally {
+      setRefreshing(false);
+    }
   }, [loadNotes]);
 
   const handleLongPress = useCallback((noteId: string) => {
@@ -111,7 +123,7 @@ export default function NotesScreen() {
   }, [selectedNoteId, notes, loadNotes, handleDeselect]);
 
   const showEmptySearch = searchQuery.trim().length > 0 && filteredNotes.length === 0;
-  const showEmptyList = notes.length === 0;
+  const showEmptyList = !initialLoading && notes.length === 0;
 
   return (
     <View style={styles.container}>
@@ -180,7 +192,9 @@ export default function NotesScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            {showEmptySearch ? (
+            {initialLoading ? (
+              <ActivityIndicator size="large" color={accentColor} />
+            ) : showEmptySearch ? (
               <>
                 <FontAwesome name="search" size={40} style={styles.emptyIcon} />
                 <Text style={styles.emptyText}>No notes match your search</Text>
