@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import React from 'react';
-import { Image, Pressable, StyleSheet } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -12,34 +12,39 @@ export default function IntroScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.center}>
-        <Image
-          source={require('../assets/images/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.center}>
+          <Image
+            source={require('../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
-        <Text style={styles.subtitle}>Your Bible Note-Taking Companion</Text>
+          <Text style={styles.subtitle}>Your Bible Note-Taking Companion</Text>
 
-        <Text style={styles.verse}>
-          “...being rooted and grounded in love.”{'\n'}
-          <Text style={styles.verseRef}>Ephesians 3:17</Text>
-        </Text>
+          <Text style={styles.verse}>
+            {"\"...being rooted and grounded in love, may have strength to comprehend with all the saints what is the breadth and length and height and depth, and to know the love of Christ that surpasses knowledge, that you may be filled with all the fullness of God.\"\n\n"}
+            <Text style={styles.verseRef}>— Ephesians 3:17-21</Text>
+          </Text>
 
-        <Link href="/(tabs)" asChild>
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              { backgroundColor: accent },
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Text style={[styles.buttonText, { color: buttonTextColor }]}>
-              Enter notes
-            </Text>
-          </Pressable>
-        </Link>
-      </View>
+          <Link href="/(tabs)" asChild>
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                { backgroundColor: accent },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={[styles.buttonText, { color: buttonTextColor }]}>
+                Enter notes
+              </Text>
+            </Pressable>
+          </Link>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -47,18 +52,22 @@ export default function IntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
     paddingHorizontal: 24,
-    paddingVertical: 40,
-    justifyContent: 'center',
+    paddingTop: 152,
+    paddingBottom: 40,
   },
   center: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   logo: {
-    width: 240,
-    height: 240,
-    marginBottom: 16,
+    width: 220,
+    height: 220,
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
@@ -72,6 +81,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     textAlign: 'center',
     lineHeight: 22,
+    paddingHorizontal: 8,
   },
   verseRef: {
     fontStyle: 'normal',
@@ -99,4 +109,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
