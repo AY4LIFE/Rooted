@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { Text } from '@/components/Themed';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -34,13 +34,7 @@ export function NoteContent({ content, onVersePress, verseOnly = false }: NoteCo
             {index > 0 && <Text style={styles.separator}> • </Text>}
             <Text
               style={[styles.verseLink, { color: verseColor }]}
-              onPress={() => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/10946e0d-dc4d-42fe-b13e-1e58cab5efea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NoteContent.tsx:verseOnly onPress',message:'verse link tapped',data:{raw:segment.parsed?.raw},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-                console.log('[DEBUG] verse link tapped (verseOnly)', segment.parsed?.raw);
-                // #endregion
-                onVersePress(segment.parsed!);
-              }}
+              onPress={() => onVersePress(segment.parsed!)}
             >
               {segment.content}
             </Text>
@@ -59,13 +53,7 @@ export function NoteContent({ content, onVersePress, verseOnly = false }: NoteCo
           segment.parsed && (
             <Pressable
               key={index}
-              onPress={() => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/10946e0d-dc4d-42fe-b13e-1e58cab5efea',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'NoteContent.tsx:onPress',message:'verse link tapped',data:{raw:segment.parsed?.raw},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A'})}).catch(()=>{});
-                console.log('[DEBUG] verse link tapped', segment.parsed?.raw);
-                // #endregion
-                onVersePress(segment.parsed!);
-              }}
+              onPress={() => onVersePress(segment.parsed!)}
               style={({ pressed }) => [styles.versePressable, pressed && styles.versePressed]}
             >
               <Text style={[styles.verseLink, { color: verseColor }]}>

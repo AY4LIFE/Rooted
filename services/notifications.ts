@@ -68,7 +68,7 @@ export async function requestPermissions(): Promise<boolean> {
         });
       } catch (error) {
         // Ignore errors in Expo Go - local notifications still work
-        console.log('Notification channel setup skipped (Expo Go)');
+        // Channel setup skipped (expected in Expo Go)
       }
     }
 
@@ -129,7 +129,6 @@ export async function scheduleRemindersForNote(noteId: string): Promise<void> {
     } catch (error) {
       // In Expo Go, local notifications should still work despite the warning
       // The warning is about remote push notifications, which we don't use
-      console.log('Note: Local notifications may require a development build for full functionality');
       console.error('Failed to schedule notification:', error);
     }
 
