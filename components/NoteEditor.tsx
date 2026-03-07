@@ -11,7 +11,6 @@ import {
 import { WebView } from 'react-native-webview';
 
 import { Text, useThemeColor } from '@/components/Themed';
-import { FormattingToolbar } from './FormattingToolbar';
 import { VerseChip } from './VerseChip';
 import { parseVerseReferences } from '@/services/verseParser';
 
@@ -25,21 +24,58 @@ interface NoteEditorProps {
   onVersePress: (parsed: { bookId: string; chapter: number; verseStart: number; verseEnd: number; raw: string }) => void;
 }
 
-function getEditorHTML(textColor: string, placeholderColor: string): string {
+function getEditorHTML(
+  textColor: string,
+  placeholderColor: string,
+  accentColor: string,
+  borderColor: string,
+  bgColor: string,
+): string {
   return `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:transparent}
+#toolbar-wrap{
+  position:sticky;top:0;z-index:10;
+  padding:10px 4px 14px;
+  background:${bgColor};
+}
+#toolbar{
+  display:flex;justify-content:center;
+  border:1.5px dashed ${borderColor};
+  border-radius:16px;
+  padding:8px 10px;
+}
+.tb-btn{
+  width:44px;height:44px;
+  border:1.5px solid ${borderColor};
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 5px;
+  font-size:17px;font-family:inherit;
+  color:${textColor};
+  background:transparent;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+  transition:background 0.15s,color 0.15s,border-color 0.15s;
+}
+.tb-btn.active{
+  background:${accentColor};
+  color:#faf8f5;
+  border-color:${accentColor};
+}
+.tb-btn:active{opacity:0.65}
+.tb-btn b{font-weight:900}
+.tb-btn i{font-style:italic}
+.tb-btn u{text-decoration:underline}
 #editor{
   outline:none;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  font-size:17px;
-  line-height:1.76;
+  font-size:17px;line-height:1.76;
   color:${textColor};
-  padding:8px 0;
-  min-height:100%;
+  padding:0 4px;min-height:300px;
   word-wrap:break-word;
   -webkit-user-select:text;
 }
@@ -55,23 +91,18 @@ html,body{height:100%;background:transparent}
 #editor li{margin:2px 0}
 </style>
 </head><body>
+<div id="toolbar-wrap">
+  <div id="toolbar">
+    <div class="tb-btn" data-cmd="bold"><b>B</b></div>
+    <div class="tb-btn" data-cmd="italic"><i>I</i></div>
+    <div class="tb-btn" data-cmd="underline"><u>U</u></div>
+    <div class="tb-btn" data-cmd="insertUnorderedList">\u2022</div>
+  </div>
+</div>
 <div id="editor" contenteditable="true" data-placeholder="Start writing your notes here... Type Bible references like John 3:16 to make them tappable."></div>
 <script>
 var editor=document.getElementById('editor');
-var savedRange=null;
-
-editor.addEventListener('blur',function(){
-  var sel=window.getSelection();
-  if(sel.rangeCount>0) savedRange=sel.getRangeAt(0).cloneRange();
-});
-
-function restoreSelection(){
-  if(savedRange){
-    var sel=window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(savedRange);
-  }
-}
+var buttons=document.querySelectorAll('.tb-btn');
 
 function sendUpdate(){
   window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -81,23 +112,41 @@ function sendUpdate(){
   }));
 }
 
-editor.addEventListener('input',sendUpdate);
-
-function execCmd(command,value){
-  editor.focus();
-  restoreSelection();
-  document.execCommand(command,false,value||null);
+function execFormatBtn(btn){
+  var cmd=btn.getAttribute('data-cmd');
+  document.execCommand(cmd,false,null);
+  updateToolbar();
   sendUpdate();
 }
 
-function setHTML(html){
-  editor.innerHTML=html||'';
+function updateToolbar(){
+  buttons.forEach(function(btn){
+    var cmd=btn.getAttribute('data-cmd');
+    if(document.queryCommandState(cmd)){
+      btn.classList.add('active');
+    }else{
+      btn.classList.remove('active');
+    }
+  });
 }
 
+buttons.forEach(function(btn){
+  btn.addEventListener('touchstart',function(e){e.preventDefault();});
+  btn.addEventListener('touchend',function(e){
+    e.preventDefault();
+    execFormatBtn(btn);
+  });
+  btn.addEventListener('mousedown',function(e){e.preventDefault();});
+  btn.addEventListener('click',function(){execFormatBtn(btn);});
+});
+
+editor.addEventListener('input',sendUpdate);
+document.addEventListener('selectionchange',updateToolbar);
+
+function setHTML(html){editor.innerHTML=html||'';}
+
 function handleMessage(data){
-  if(data.type==='format'){
-    execCmd(data.command,data.value);
-  }else if(data.type==='setContent'){
+  if(data.type==='setContent'){
     setHTML(data.html);
     sendUpdate();
   }else if(data.type==='focus'){
@@ -128,6 +177,7 @@ export function NoteEditor({
   const placeholderColor = useThemeColor({}, 'placeholder');
   const accentColor = useThemeColor({}, 'accent');
   const borderColor = useThemeColor({}, 'border');
+  const bgColor = useThemeColor({}, 'background');
   const { height: windowHeight } = useWindowDimensions();
 
   const webViewRef = useRef<WebView>(null);
@@ -156,11 +206,6 @@ export function NoteEditor({
     } catch {}
   }, [onContentChange]);
 
-  const handleFormat = useCallback((command: string, value?: string) => {
-    const msg = JSON.stringify({ type: 'format', command, value });
-    webViewRef.current?.injectJavaScript(`handleMessage(${msg}); true;`);
-  }, []);
-
   const handleWebViewLoad = useCallback(() => {
     if (!initialContentSet.current && content) {
       const html = content.includes('<') ? content : content.replace(/\n/g, '<br>');
@@ -171,8 +216,8 @@ export function NoteEditor({
   }, [content]);
 
   const htmlSource = useMemo(() => ({
-    html: getEditorHTML(textColor, placeholderColor),
-  }), [textColor, placeholderColor]);
+    html: getEditorHTML(textColor, placeholderColor, accentColor, borderColor, bgColor),
+  }), [textColor, placeholderColor, accentColor, borderColor, bgColor]);
 
   const keyboardOffset = Platform.OS === 'ios' ? Math.min(windowHeight * 0.12, 100) : 0;
 
@@ -182,7 +227,7 @@ export function NoteEditor({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={keyboardOffset}
     >
-      {/* Header section: Title, Event, Verses, Toolbar */}
+      {/* Native header: Title, Event, Verses */}
       <View style={[styles.header, { borderBottomColor: borderColor }]}>
         <TextInput
           style={[styles.titleInput, { color: textColor, borderBottomColor: borderColor }]}
@@ -228,13 +273,9 @@ export function NoteEditor({
             </ScrollView>
           </View>
         )}
-
-        <View style={styles.toolbarWrap}>
-          <FormattingToolbar onFormat={handleFormat} />
-        </View>
       </View>
 
-      {/* Content: WebView rich text editor */}
+      {/* WebView: toolbar (sticky inside) + content */}
       <WebView
         ref={webViewRef}
         source={htmlSource}
@@ -246,7 +287,6 @@ export function NoteEditor({
         hideKeyboardAccessoryView
         scrollEnabled
         showsVerticalScrollIndicator={false}
-        contentMode="mobile"
         javaScriptEnabled
       />
     </KeyboardAvoidingView>
@@ -285,10 +325,6 @@ const styles = StyleSheet.create({
   verseBarContent: {
     alignItems: 'center',
     paddingRight: 8,
-  },
-  toolbarWrap: {
-    marginVertical: 10,
-    alignItems: 'center',
   },
   webView: {
     flex: 1,
