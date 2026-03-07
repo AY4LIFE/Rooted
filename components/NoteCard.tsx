@@ -1,6 +1,7 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View as RNView } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import type { Note } from '@/services/notesDb';
@@ -26,7 +27,11 @@ function formatDate(iso: string): string {
   }
   if (days === 1) return 'Yesterday';
   if (days < 7) return `${days} days ago`;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export const NoteCard = React.memo(function NoteCard({
@@ -38,10 +43,11 @@ export const NoteCard = React.memo(function NoteCard({
   const router = useRouter();
   const cardBg = useThemeColor({}, 'card');
   const accentColor = useThemeColor({}, 'accent');
+  const borderColor = useThemeColor({}, 'border');
   const preview =
-    note.content.length > 100
-      ? note.content.slice(0, 100) + '...'
-      : note.content;
+    note.content.length > 120
+      ? note.content.slice(0, 120).replace(/[*_#\-]/g, '') + '...'
+      : note.content.replace(/[*_#\-]/g, '');
 
   const handlePress = () => {
     if (onPress) {
@@ -63,7 +69,7 @@ export const NoteCard = React.memo(function NoteCard({
         activeOpacity={0.7}
         delayLongPress={500}
       >
-        <View
+        <RNView
           style={[
             styles.content,
             {
@@ -75,23 +81,39 @@ export const NoteCard = React.memo(function NoteCard({
           ]}
         >
           {isSelected && (
-            <View style={[styles.selectedIndicator, { backgroundColor: accentColor }]}>
-              <Text style={styles.selectedIndicatorText}>✓</Text>
-            </View>
+            <RNView style={[styles.selectedBadge, { backgroundColor: accentColor }]}>
+              <FontAwesome name="check" size={12} color="#faf8f5" />
+            </RNView>
           )}
-          <Text style={styles.title} numberOfLines={1}>
-            {note.title || 'Untitled'}
-          </Text>
-          {note.event_name && (
-            <Text style={styles.event} numberOfLines={1}>
-              {note.event_name}
+
+          <RNView style={styles.topRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {note.title || 'Untitled'}
             </Text>
-          )}
+            <Text style={[styles.date, { color: accentColor }]}>{formatDate(note.updated_at)}</Text>
+          </RNView>
+
+          {note.event_name ? (
+            <RNView style={[styles.eventBadge, { backgroundColor: borderColor }]}>
+              <Text style={styles.eventText} numberOfLines={1}>
+                {note.event_name}
+              </Text>
+            </RNView>
+          ) : null}
+
           <Text style={styles.preview} numberOfLines={2}>
             {preview || 'No content'}
           </Text>
-          <Text style={styles.date}>{formatDate(note.updated_at)}</Text>
-        </View>
+
+          {note.takeaway_verse ? (
+            <RNView style={[styles.takeawayRow, { borderTopColor: borderColor }]}>
+              <FontAwesome name="bookmark" size={12} color={accentColor} />
+              <Text style={[styles.takeawayText, { color: accentColor }]}>
+                {note.takeaway_verse}
+              </Text>
+            </RNView>
+          ) : null}
+        </RNView>
       </TouchableOpacity>
     </View>
   );
@@ -100,16 +122,16 @@ export const NoteCard = React.memo(function NoteCard({
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: 20,
-    marginVertical: 10,
+    marginVertical: 8,
   },
   card: {
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cardSelected: {
     opacity: 0.95,
@@ -120,40 +142,62 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     position: 'relative',
   },
-  selectedIndicator: {
+  selectedBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 14,
+    right: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  selectedIndicatorText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontWeight: '700',
+    flex: 1,
+    marginRight: 12,
     letterSpacing: 0.2,
   },
-  event: {
-    fontSize: 14,
-    opacity: 0.75,
-    marginBottom: 6,
+  date: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  eventBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  eventText: {
+    fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.8,
   },
   preview: {
     fontSize: 15,
     lineHeight: 22,
-    opacity: 0.85,
-    marginBottom: 10,
+    opacity: 0.75,
+    marginBottom: 4,
   },
-  date: {
+  takeawayRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    marginTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  takeawayText: {
     fontSize: 13,
-    opacity: 0.65,
+    fontWeight: '700',
+    marginLeft: 8,
+    letterSpacing: 0.2,
   },
 });

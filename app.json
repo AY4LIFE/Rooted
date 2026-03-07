@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.ay4life.rooted",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -51,6 +53,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "beb04014-0ec6-4c6c-b95a-e7c9f53a737d"
+      }
     }
   }
 }

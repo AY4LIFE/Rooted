@@ -7,14 +7,16 @@ export interface ParsedVerse {
   verseStart: number;
   verseEnd: number;
   raw: string;
+  isFullChapter?: boolean;
 }
 
 /**
  * Regex to match Bible verse references.
- * Matches: John 3:16, 1 John 4:5, 1 Cor 13:4-7, Genesis 1:1
+ * Matches: John 3:16, 1 John 4:5, 1 Cor 13:4-7, Genesis 1:1, Matthew 1, Genesis 5
+ * The :verse part is optional -- when omitted, treated as a full chapter reference.
  */
 const VERSE_REF_REGEX =
-  /(\d?\s*[A-Za-z]+)\s+(\d+):(\d+)(?:-(\d+))?(?:,\s*(\d+)(?:-(\d+))?)*/g;
+  /(\d?\s*[A-Za-z]+)\s+(\d+)(?::(\d+)(?:-(\d+))?)?/g;
 
 export function parseVerseReferences(text: string): Array<{ match: string; parsed: ParsedVerse }> {
   const results: Array<{ match: string; parsed: ParsedVerse }> = [];
@@ -24,8 +26,11 @@ export function parseVerseReferences(text: string): Array<{ match: string; parse
   while ((match = regex.exec(text)) !== null) {
     const bookPart = match[1].trim();
     const chapter = parseInt(match[2], 10);
-    const verseStart = parseInt(match[3], 10);
-    const verseEnd = match[4] ? parseInt(match[4], 10) : verseStart;
+    const hasVerse = match[3] !== undefined;
+    const verseStart = hasVerse ? parseInt(match[3], 10) : 1;
+    const verseEnd = hasVerse
+      ? (match[4] ? parseInt(match[4], 10) : verseStart)
+      : 200;
 
     const bookId = getBookId(bookPart);
     if (bookId) {
@@ -38,6 +43,7 @@ export function parseVerseReferences(text: string): Array<{ match: string; parse
           verseStart,
           verseEnd,
           raw: match[0],
+          isFullChapter: !hasVerse,
         },
       });
     }

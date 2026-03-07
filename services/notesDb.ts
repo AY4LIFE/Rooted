@@ -8,6 +8,7 @@ export interface Note {
   created_at: string;
   updated_at: string;
   event_name: string | null;
+  takeaway_verse: string | null;
 }
 
 function generateId(): string {
@@ -40,21 +41,21 @@ export async function createNote(
   const now = new Date().toISOString();
 
   await db.runAsync(
-    `INSERT INTO notes (id, title, content, created_at, updated_at, event_name)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO notes (id, title, content, created_at, updated_at, event_name, takeaway_verse)
+     VALUES (?, ?, ?, ?, ?, ?, NULL)`,
     [id, title, content, now, now, event_name]
   );
 
-  const note = {
+  const note: Note = {
     id,
     title,
     content,
     created_at: now,
     updated_at: now,
     event_name,
+    takeaway_verse: null,
   };
 
-  // Schedule accountability reminders
   scheduleRemindersForNote(id).catch((error) => {
     console.error('Failed to schedule reminders for note:', error);
   });
@@ -77,11 +78,19 @@ export async function updateNote(
   );
 }
 
+export async function setTakeawayVerse(
+  id: string,
+  takeawayVerse: string
+): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE notes SET takeaway_verse = ? WHERE id = ?`,
+    [takeawayVerse, id]
+  );
+}
+
 export async function deleteNote(id: string): Promise<void> {
   const db = await getDatabase();
-  
-  // Cancel any pending reminders
   await cancelRemindersForNote(id);
-  
   await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
 }

@@ -142,7 +142,7 @@ async function fetchBollsVerse(
     }
   }
 
-  return verses.join(' ');
+  return verses.join('\n');
 }
 
 // ─── Unified fetch ─────────────────────────────────────────────────
@@ -178,5 +178,5 @@ export async function fetchVerse(
     }
   }
 
-  return verses.join(' ');
+  return verses.join('\n');
 }

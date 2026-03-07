@@ -117,7 +117,9 @@ export async function scheduleRemindersForNote(noteId: string): Promise<void> {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: `Time to Reflect: ${note.title}`,
-          body: getRandomQuestion(),
+          body: note.takeaway_verse
+            ? `Remember: "${note.takeaway_verse}" - ${getRandomQuestion()}`
+            : getRandomQuestion(),
           data: { noteId, type: 'accountability', reminderId },
           sound: true,
         },

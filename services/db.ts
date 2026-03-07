@@ -49,5 +49,14 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
     ON accountability_reminders(scheduled_for);
   `);
 
+  // Add takeaway_verse column if it doesn't exist (migration)
+  try {
+    await database.runAsync(
+      `ALTER TABLE notes ADD COLUMN takeaway_verse TEXT`
+    );
+  } catch {
+    // Column already exists
+  }
+
   return database;
 }

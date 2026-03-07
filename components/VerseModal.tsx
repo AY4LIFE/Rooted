@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -30,11 +31,13 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
   const [error, setError] = useState<string | null>(null);
   const backgroundColor = useThemeColor({}, 'background');
   const overlayBg = useThemeColor({}, 'overlay');
+  const cardBg = useThemeColor({}, 'card');
   const errorColor = useThemeColor({}, 'error');
   const buttonSecondaryBg = useThemeColor({}, 'buttonSecondary');
   const buttonSecondaryTextColor = useThemeColor({}, 'buttonSecondaryText');
   const accentColor = useThemeColor({}, 'accent');
   const buttonTextColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({}, 'border');
 
   useEffect(() => {
     if (!visible || !parsed) {
@@ -75,18 +78,20 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
 
   if (!parsed) return null;
 
-  const reference = `${parsed.book} ${parsed.chapter}:${parsed.verseStart}${
-    parsed.verseEnd !== parsed.verseStart ? `-${parsed.verseEnd}` : ''
-  }`;
+  const isFullChapter = parsed.verseStart === 1 && parsed.verseEnd >= 200;
+  const reference = isFullChapter
+    ? `${parsed.book} ${parsed.chapter}`
+    : `${parsed.book} ${parsed.chapter}:${parsed.verseStart}${
+        parsed.verseEnd !== parsed.verseStart ? `-${parsed.verseEnd}` : ''
+      }`;
 
   const handleCopy = async () => {
     if (!text) return;
-    
     const textToCopy = `${reference}\n${text}`;
     try {
       await Clipboard.setStringAsync(textToCopy);
       Alert.alert('Copied!', 'Verse text has been copied to clipboard');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to copy verse text');
     }
   };
@@ -101,10 +106,19 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
       <View style={[styles.overlay, { backgroundColor: overlayBg }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={[styles.content, { backgroundColor }]}>
-          <View style={styles.header}>
-            <Text style={styles.reference}>{reference}</Text>
-            <Text style={styles.translation}>{translationName}</Text>
+          {/* Decorative header */}
+          <View style={[styles.header, { backgroundColor: cardBg }]}>
+            <View style={[styles.headerAccent, { backgroundColor: accentColor }]} />
+            <View style={styles.headerBody}>
+              <Text style={[styles.quoteIcon, { color: accentColor }]}>{'\u201C'}</Text>
+              <View style={styles.headerText}>
+                <Text style={styles.reference}>{reference}</Text>
+                <Text style={[styles.translation, { color: accentColor }]}>{translationName}</Text>
+              </View>
+            </View>
           </View>
+
+          {/* Verse body */}
           <View style={styles.body} pointerEvents="box-none">
             {loading && (
               <ActivityIndicator size="large" style={styles.loader} />
@@ -126,10 +140,12 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
               </ScrollView>
             )}
           </View>
-          <View style={styles.buttonRow}>
+
+          {/* Action buttons */}
+          <View style={[styles.buttonRow, { borderTopColor: borderColor }]}>
             <Pressable
               style={({ pressed }) => [
-                styles.copyButton,
+                styles.actionButton,
                 { backgroundColor: accentColor },
                 pressed && styles.pressed,
                 !text && styles.buttonDisabled,
@@ -137,19 +153,20 @@ export function VerseModal({ visible, parsed, onClose }: VerseModalProps) {
               onPress={handleCopy}
               disabled={!text}
             >
-              <Text style={[styles.copyText, { color: buttonTextColor }]}>
+              <FontAwesome name="copy" size={16} color={buttonTextColor} style={{ marginRight: 8 }} />
+              <Text style={[styles.actionButtonText, { color: buttonTextColor }]}>
                 Copy
               </Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
-                styles.closeButton,
+                styles.actionButton,
                 { backgroundColor: buttonSecondaryBg },
                 pressed && styles.pressed,
               ]}
               onPress={onClose}
             >
-              <Text style={[styles.closeText, { color: buttonSecondaryTextColor }]}>
+              <Text style={[styles.actionButtonText, { color: buttonSecondaryTextColor }]}>
                 Close
               </Text>
             </Pressable>
@@ -169,73 +186,91 @@ const styles = StyleSheet.create({
   },
   content: {
     borderRadius: 20,
-    padding: 24,
-    maxWidth: 400,
+    maxWidth: 420,
     width: '100%',
     maxHeight: Dimensions.get('window').height * 0.75,
+    overflow: 'hidden',
   },
   header: {
-    marginBottom: 18,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  headerAccent: {
+    width: 5,
+  },
+  headerBody: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  quoteIcon: {
+    fontSize: 48,
+    lineHeight: 48,
+    fontWeight: '700',
+    marginRight: 8,
+    marginTop: -6,
+  },
+  headerText: {
+    flex: 1,
+    paddingTop: 4,
   },
   reference: {
     fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 6,
-    letterSpacing: 0.2,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    marginBottom: 4,
   },
   translation: {
-    fontSize: 14,
-    opacity: 0.75,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   body: {
     minHeight: 80,
     height: 280,
     maxHeight: 320,
-    marginBottom: 20,
+    paddingHorizontal: 24,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   loader: {
     marginVertical: 24,
   },
   error: {
     fontSize: 16,
+    paddingVertical: 16,
   },
   verseText: {
     fontSize: 18,
-    lineHeight: 30,
+    lineHeight: 32,
   },
   buttonRow: {
     flexDirection: 'row',
+    padding: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  copyButton: {
+  actionButton: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 12,
-    marginRight: 12,
-  },
-  closeButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderRadius: 12,
+    marginHorizontal: 4,
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   pressed: {
     opacity: 0.85,
   },
-  copyText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  closeText: {
+  actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

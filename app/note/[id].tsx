@@ -3,9 +3,10 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { NoteEditor } from '@/components/NoteEditor';
-import { Text } from '@/components/Themed';
+import { Text, useThemeColor } from '@/components/Themed';
+import { TakeawayVerseModal } from '@/components/TakeawayVerseModal';
 import { VerseModal } from '@/components/VerseModal';
-import { createNote, deleteNote, getNote, updateNote } from '@/services/notesDb';
+import { createNote, deleteNote, getNote, setTakeawayVerse, updateNote } from '@/services/notesDb';
 import type { ParsedVerse } from '@/services/verseParser';
 
 export default function NoteScreen() {
@@ -18,13 +19,18 @@ export default function NoteScreen() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [eventName, setEventName] = useState('');
+  const [takeawayVerse, setTakeawayVerseState] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isNew);
+  const [showTakeawayModal, setShowTakeawayModal] = useState(false);
   const [verseModal, setVerseModal] = useState<{
     visible: boolean;
     parsed: ParsedVerse | null;
   }>({ visible: false, parsed: null });
   const isSavedRef = useRef(false);
   const initialDataRef = useRef<{ title: string; content: string; eventName: string } | null>(null);
+  const savedNoteIdRef = useRef<string | null>(isNew ? null : noteId);
+  const accentColor = useThemeColor({}, 'accent');
+  const cardBg = useThemeColor({}, 'card');
 
   const loadNote = useCallback(async () => {
     if (isNew) {
@@ -39,12 +45,13 @@ export default function NoteScreen() {
         setTitle(note.title);
         setContent(note.content);
         setEventName(note.event_name || '');
+        setTakeawayVerseState(note.takeaway_verse);
         initialDataRef.current = {
           title: note.title,
           content: note.content,
           eventName: note.event_name || '',
         };
-        isSavedRef.current = true; // Existing note is considered saved
+        isSavedRef.current = true;
       } else {
         initialDataRef.current = null;
         isSavedRef.current = false;
@@ -67,7 +74,6 @@ export default function NoteScreen() {
   }, [loadNote]);
 
   const hasUnsavedChanges = useCallback(() => {
-    // If we just saved, don't show unsaved changes prompt
     if (isSavedRef.current) return false;
     if (isNew) return title.trim().length > 0 || content.trim().length > 0;
     const initial = initialDataRef.current;
@@ -92,21 +98,22 @@ export default function NoteScreen() {
           content,
           eventName.trim() || null
         );
-        // Update initial data before navigation to prevent unsaved changes prompt
         initialDataRef.current = {
           title: title.trim(),
           content,
           eventName: eventName.trim() || '',
         };
         isSavedRef.current = true;
+        savedNoteIdRef.current = note.id;
+        // Show takeaway verse modal after first save
+        setShowTakeawayModal(true);
         router.replace(`/note/${note.id}`);
       } else {
         await updateNote(noteId!, title.trim(), content, eventName.trim() || null);
-        // Update initial data immediately after save
-        initialDataRef.current = { 
-          title: title.trim(), 
-          content, 
-          eventName: eventName.trim() || '' 
+        initialDataRef.current = {
+          title: title.trim(),
+          content,
+          eventName: eventName.trim() || '',
         };
         isSavedRef.current = true;
       }
@@ -114,6 +121,19 @@ export default function NoteScreen() {
       Alert.alert('Error', 'Failed to save note');
     }
   }, [noteId, isNew, title, content, eventName, router]);
+
+  const handleTakeawayConfirm = useCallback(async (verseRef: string) => {
+    const nId = savedNoteIdRef.current || noteId;
+    if (nId) {
+      try {
+        await setTakeawayVerse(nId, verseRef);
+        setTakeawayVerseState(verseRef);
+      } catch (error) {
+        console.error('Failed to save takeaway verse:', error);
+      }
+    }
+    setShowTakeawayModal(false);
+  }, [noteId]);
 
   const handleDelete = useCallback(() => {
     if (isNew) return;
@@ -161,11 +181,7 @@ export default function NoteScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-      // Check if there are unsaved changes
-      if (!hasUnsavedChanges()) {
-        // No unsaved changes, allow navigation
-        return;
-      }
+      if (!hasUnsavedChanges()) return;
 
       e.preventDefault();
 
@@ -173,54 +189,43 @@ export default function NoteScreen() {
         'Discard changes?',
         'You have unsaved changes. Save before leaving?',
         [
-          { 
-            text: "Don't save", 
-            style: 'destructive', 
-            onPress: () => {
-              // Allow navigation without saving
-              navigation.dispatch(e.data.action);
-            }
+          {
+            text: "Don't save",
+            style: 'destructive',
+            onPress: () => navigation.dispatch(e.data.action),
           },
-          { 
-            text: 'Save', 
+          {
+            text: 'Save',
             onPress: async () => {
               if (!title.trim()) {
-                // No title, can't save - just navigate away
                 navigation.dispatch(e.data.action);
                 return;
               }
               try {
                 if (isNew) {
                   const note = await createNote(title.trim(), content, eventName.trim() || null);
-                  // Update initial data to prevent duplicate save prompts
-                  initialDataRef.current = { 
-                    title: title.trim(), 
-                    content, 
-                    eventName: eventName.trim() || '' 
+                  initialDataRef.current = {
+                    title: title.trim(),
+                    content,
+                    eventName: eventName.trim() || '',
                   };
                   isSavedRef.current = true;
-                  // Navigate to the saved note, then back
                   router.replace(`/note/${note.id}`);
-                  // Small delay to ensure route replacement completes
-                  setTimeout(() => {
-                    navigation.dispatch(e.data.action);
-                  }, 100);
+                  setTimeout(() => navigation.dispatch(e.data.action), 100);
                 } else {
                   await updateNote(noteId!, title.trim(), content, eventName.trim() || null);
-                  // Update initial data immediately after save
-                  initialDataRef.current = { 
-                    title: title.trim(), 
-                    content, 
-                    eventName: eventName.trim() || '' 
+                  initialDataRef.current = {
+                    title: title.trim(),
+                    content,
+                    eventName: eventName.trim() || '',
                   };
                   isSavedRef.current = true;
-                  // Allow navigation after save
                   navigation.dispatch(e.data.action);
                 }
               } catch {
                 Alert.alert('Error', 'Failed to save note');
               }
-            }
+            },
           },
           { text: 'Cancel', style: 'cancel' },
         ]
@@ -240,7 +245,7 @@ export default function NoteScreen() {
     setVerseModal({
       visible: true,
       parsed: {
-        book: parsed.raw.split(/\s+\d+:/)[0],
+        book: parsed.raw.split(/\s+\d+[:/]/)[0] || parsed.raw.split(/\s+\d+$/)[0],
         bookId: parsed.bookId,
         chapter: parsed.chapter,
         verseStart: parsed.verseStart,
@@ -266,22 +271,37 @@ export default function NoteScreen() {
         eventName={eventName}
         onTitleChange={(value) => {
           setTitle(value);
-          isSavedRef.current = false; // Mark as unsaved when content changes
+          isSavedRef.current = false;
         }}
         onContentChange={(value) => {
           setContent(value);
-          isSavedRef.current = false; // Mark as unsaved when content changes
+          isSavedRef.current = false;
         }}
         onEventNameChange={(value) => {
           setEventName(value);
-          isSavedRef.current = false; // Mark as unsaved when content changes
+          isSavedRef.current = false;
         }}
         onVersePress={handleVersePress}
       />
+
+      {/* Takeaway verse display */}
+      {takeawayVerse && !isNew && (
+        <View style={[noteStyles.takeawayBar, { backgroundColor: cardBg }]}>
+          <Text style={[noteStyles.takeawayLabel, { color: accentColor }]}>
+            Takeaway Verse
+          </Text>
+          <Text style={noteStyles.takeawayRef}>{takeawayVerse}</Text>
+        </View>
+      )}
+
       <VerseModal
         visible={verseModal.visible}
         parsed={verseModal.parsed}
         onClose={() => setVerseModal({ visible: false, parsed: null })}
+      />
+      <TakeawayVerseModal
+        visible={showTakeawayModal}
+        onConfirm={handleTakeawayConfirm}
       />
     </>
   );
@@ -292,5 +312,22 @@ const noteStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  takeawayBar: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+  },
+  takeawayLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  takeawayRef: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

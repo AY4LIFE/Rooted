@@ -10,11 +10,10 @@ import { splitTextWithVerseRefs } from '@/services/verseParser';
 interface NoteContentProps {
   content: string;
   onVersePress: (parsed: ParsedVerse) => void;
-  /** When true, only show verse references (for preview section) */
   verseOnly?: boolean;
 }
 
-export function NoteContent({ content, onVersePress, verseOnly = false }: NoteContentProps) {
+function _NoteContent({ content, onVersePress, verseOnly = false }: NoteContentProps) {
   const colorScheme = useColorScheme();
   const verseColor =
     colorScheme === 'dark' ? Colors.dark.verseLink : Colors.light.verseLink;
@@ -31,7 +30,7 @@ export function NoteContent({ content, onVersePress, verseOnly = false }: NoteCo
       <Text style={styles.text}>
         {verseSegments.map((segment, index) => (
           <React.Fragment key={index}>
-            {index > 0 && <Text style={styles.separator}> • </Text>}
+            {index > 0 && <Text style={styles.separator}> {'\u2022'} </Text>}
             <Text
               style={[styles.verseLink, { color: verseColor }]}
               onPress={() => onVersePress(segment.parsed!)}
@@ -67,6 +66,8 @@ export function NoteContent({ content, onVersePress, verseOnly = false }: NoteCo
   );
 }
 
+export const NoteContent = React.memo(_NoteContent);
+
 const styles = StyleSheet.create({
   text: {
     fontSize: 16,
@@ -74,6 +75,10 @@ const styles = StyleSheet.create({
   },
   verseLink: {
     textDecorationLine: 'underline',
+  },
+  versePressable: {},
+  versePressed: {
+    opacity: 0.7,
   },
   separator: {
     opacity: 0.6,
