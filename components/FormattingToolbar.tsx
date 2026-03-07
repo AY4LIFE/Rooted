@@ -4,15 +4,14 @@ import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { Text, useThemeColor } from '@/components/Themed';
 
 interface FormattingToolbarProps {
-  onFormat: (marker: string, wrap: boolean) => void;
+  onFormat: (command: string, value?: string) => void;
 }
 
-const BUTTONS: { label: string; marker: string; wrap: boolean }[] = [
-  { label: 'B', marker: '**', wrap: true },
-  { label: 'I', marker: '*', wrap: true },
-  { label: 'U', marker: '__', wrap: true },
-  { label: 'H1', marker: '# ', wrap: false },
-  { label: '\u2022', marker: '- ', wrap: false },
+const BUTTONS: { label: string; command: string; value?: string }[] = [
+  { label: 'B', command: 'bold' },
+  { label: 'I', command: 'italic' },
+  { label: 'U', command: 'underline' },
+  { label: '\u2022', command: 'insertUnorderedList' },
 ];
 
 export function FormattingToolbar({ onFormat }: FormattingToolbarProps) {
@@ -33,7 +32,7 @@ export function FormattingToolbar({ onFormat }: FormattingToolbarProps) {
       {BUTTONS.map((btn) => (
         <Pressable
           key={btn.label}
-          onPress={() => onFormat(btn.marker, btn.wrap)}
+          onPress={() => onFormat(btn.command, btn.value)}
           style={({ pressed }) => [
             styles.button,
             { borderColor },

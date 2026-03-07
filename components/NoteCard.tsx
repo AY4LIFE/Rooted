@@ -44,10 +44,11 @@ export const NoteCard = React.memo(function NoteCard({
   const cardBg = useThemeColor({}, 'card');
   const accentColor = useThemeColor({}, 'accent');
   const borderColor = useThemeColor({}, 'border');
+  const rawText = note.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
   const preview =
-    note.content.length > 120
-      ? note.content.slice(0, 120).replace(/[*_#\-]/g, '') + '...'
-      : note.content.replace(/[*_#\-]/g, '');
+    rawText.length > 120
+      ? rawText.slice(0, 120) + '...'
+      : rawText;
 
   const handlePress = () => {
     if (onPress) {
