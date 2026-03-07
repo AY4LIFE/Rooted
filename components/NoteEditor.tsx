@@ -38,7 +38,7 @@ function getEditorHTML(
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:transparent}
 #toolbar-wrap{
-  position:sticky;top:0;z-index:10;
+  position:fixed;top:0;left:0;right:0;z-index:10;
   padding:10px 4px 14px;
   background:${bgColor};
 }
@@ -75,7 +75,7 @@ html,body{height:100%;background:transparent}
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   font-size:17px;line-height:1.76;
   color:${textColor};
-  padding:0 4px;min-height:300px;
+  padding:80px 4px 0;min-height:300px;
   word-wrap:break-word;
   -webkit-user-select:text;
 }
