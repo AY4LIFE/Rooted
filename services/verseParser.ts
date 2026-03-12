@@ -46,6 +46,11 @@ export function parseVerseReferences(text: string): Array<{ match: string; parse
           isFullChapter: !hasVerse,
         },
       });
+    } else {
+      // When a word falsely matches as a book name (e.g. "read 1" consuming
+      // the "1" from "1 Corinthians 13:4"), rewind the regex so the digit
+      // can be re-parsed as part of the actual numbered book name.
+      regex.lastIndex = match.index + match[1].length;
     }
   }
 
