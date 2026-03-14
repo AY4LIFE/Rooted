@@ -36,9 +36,10 @@ function getEditorHTML(
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:transparent}
+html,body{height:100%;background:transparent;overflow:hidden}
+#wrapper{display:flex;flex-direction:column;height:100%}
 #toolbar-wrap{
-  position:fixed;top:0;left:0;right:0;z-index:10;
+  flex-shrink:0;
   padding:10px 4px 14px;
   background:${bgColor};
 }
@@ -70,12 +71,15 @@ html,body{height:100%;background:transparent}
 .tb-btn b{font-weight:900}
 .tb-btn i{font-style:italic}
 .tb-btn u{text-decoration:underline}
+#scroll-area{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
 #editor{
   outline:none;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   font-size:17px;line-height:1.76;
   color:${textColor};
-  padding:80px 4px 0;min-height:300px;
+  padding:4px 4px 120px;min-height:300px;
   word-wrap:break-word;
   -webkit-user-select:text;
 }
@@ -91,6 +95,7 @@ html,body{height:100%;background:transparent}
 #editor li{margin:2px 0}
 </style>
 </head><body>
+<div id="wrapper">
 <div id="toolbar-wrap">
   <div id="toolbar">
     <div class="tb-btn" data-cmd="bold"><b>B</b></div>
@@ -99,7 +104,10 @@ html,body{height:100%;background:transparent}
     <div class="tb-btn" data-cmd="insertUnorderedList">\u2022</div>
   </div>
 </div>
+<div id="scroll-area">
 <div id="editor" contenteditable="true" data-placeholder="Start writing your notes here... Type Bible references like John 3:16 to make them tappable."></div>
+</div>
+</div>
 <script>
 var editor=document.getElementById('editor');
 var buttons=document.querySelectorAll('.tb-btn');
@@ -140,7 +148,10 @@ buttons.forEach(function(btn){
   btn.addEventListener('click',function(){execFormatBtn(btn);});
 });
 
-editor.addEventListener('input',sendUpdate);
+editor.addEventListener('input',function(){
+  sendUpdate();
+  setTimeout(scrollCursorIntoView,50);
+});
 document.addEventListener('selectionchange',updateToolbar);
 
 function setHTML(html){editor.innerHTML=html||'';}
@@ -160,6 +171,33 @@ document.addEventListener('message',function(e){
 window.addEventListener('message',function(e){
   try{handleMessage(JSON.parse(e.data));}catch(err){}
 });
+
+var scrollArea=document.getElementById('scroll-area');
+var wrapper=document.getElementById('wrapper');
+
+function scrollCursorIntoView(){
+  var sel=window.getSelection();
+  if(!sel||!sel.rangeCount)return;
+  var range=sel.getRangeAt(0);
+  var rect=range.getBoundingClientRect();
+  var saRect=scrollArea.getBoundingClientRect();
+  if(rect.bottom>saRect.bottom-20){
+    scrollArea.scrollTop+=rect.bottom-saRect.bottom+40;
+  }else if(rect.top<saRect.top+10){
+    scrollArea.scrollTop-=saRect.top-rect.top+40;
+  }
+}
+
+function lockHeight(){
+  var h=window.visualViewport?window.visualViewport.height:window.innerHeight;
+  wrapper.style.height=h+'px';
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',lockHeight);
+}else{
+  window.addEventListener('resize',lockHeight);
+}
+lockHeight();
 </script>
 </body></html>`;
 }
@@ -285,8 +323,7 @@ export function NoteEditor({
         originWhitelist={['*']}
         keyboardDisplayRequiresUserAction={false}
         hideKeyboardAccessoryView
-        scrollEnabled
-        showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
         javaScriptEnabled
       />
     </KeyboardAvoidingView>
